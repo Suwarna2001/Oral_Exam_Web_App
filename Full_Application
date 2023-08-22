@@ -1,0 +1,90 @@
+//App.js 
+import React, { useState } from 'react';
+import './App.css';
+
+function App() {
+  const [examStarted, setExamStarted] = useState(false);
+
+  const startExam = () => {
+    // You could implement logic here to start the exam
+    setExamStarted(true);
+  };
+
+  return (
+    <div className="App">
+      <h1>Oral Exam App</h1>
+      {!examStarted ? (
+        <button onClick={startExam}>Start Exam</button>
+      ) : (
+        <div>
+          {/* Render question components and responses */}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
+
+//QuestionComponent.js
+import React, { useState } from 'react';
+
+const QuestionComponent = ({ question, onResponse }) => {
+  const [response, setResponse] = useState('');
+
+  const handleResponseChange = (event) => {
+    setResponse(event.target.value);
+  };
+
+  const handleResponseSubmit = () => {
+    onResponse(response);
+    setResponse('');
+  };
+
+  return (
+    <div>
+      <h2>Question: {question}</h2>
+      <input
+        type="text"
+        value={response}
+        onChange={handleResponseChange}
+      />
+      <button onClick={handleResponseSubmit}>Submit Response</button>
+    </div>
+  );
+};
+
+export default QuestionComponent;
+
+//server.js
+const express = require('express');
+const { OpenAIApi } = require('openai'); // Assuming this is the OpenAI API client library
+const app = express();
+const port = 3001;
+
+app.use(express.json());
+
+const openai = new OpenAIApi({
+  key: 'your_openai_api_key',
+});
+
+app.post('/generate-question', async (req, res) => {
+  try {
+    const { contentFromPdf } = req.body;
+    
+    // Use contentFromPdf to generate questions and follow-ups
+    const question = await openai.createCompletion({
+      prompt: `Generate a question about the following passage:\n${contentFromPdf}`,
+      max_tokens: 50, // Adjust as needed
+    });
+
+    res.json({ question: question.choices[0].text.trim() });
+  } catch (error) {
+    console.error('Error generating question:', error);
+    res.status(500).json({ error: 'Failed to generate question' });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
